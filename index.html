@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b1018">
+    <meta name="description" content="CS2 Türkçe envanter isimlerini CSFloat'ta arayabileceğiniz İngilizce isimlere çevirin.">
+    <title>CS2 İtem Çevirici | HaKING.DEV</title>
+    <link rel="preconnect" href="https://raw.githubusercontent.com">
+    <link rel="preconnect" href="https://community.akamai.steamstatic.com">
+    <link rel="preconnect" href="https://cdn.steamstatic.com">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="CS2 İtem Çevirici | HaKING.DEV">
+    <meta property="og:description" content="Türkçe CS2 envanter adlarını CSFloat'ta arayabileceğiniz İngilizce isimlere çevirin.">
+    <meta name="color-scheme" content="dark">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <script src="assets/js/app.js" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#search">Aramaya atla</a>
+    <div class="page-shell">
+        <header class="topbar">
+            <a class="wordmark" href="./" aria-label="CS2 İtem Çevirici ana sayfa">
+                <span class="wordmark-icon" aria-hidden="true"><img src="assets/logo.svg" alt=""></span>
+                <span>CS<span class="wordmark-accent">NAME</span></span>
+            </a>
+            <nav class="topbar-nav" aria-label="Ana menü">
+                <a href="#search">İtem bul</a>
+                <a href="#about">Hakkında</a>
+            </nav>
+            <span class="topbar-note"><span class="topbar-dot"></span> TOPLULUK KATALOĞU</span>
+        </header>
+
+        <main>
+            <section class="hero" aria-labelledby="page-title">
+                <div class="hero-kicker"><span class="eyebrow-mark"></span> CS2 PAZAR ARAMA YARDIMCISI <span class="eyebrow-mark"></span></div>
+                <h1 id="page-title">Envanterini keşfet.<br><span>İsmini doğru bul.</span></h1>
+                <p class="hero-copy">Türkçe adla ara, item görsellerine göz at ve CSFloat'ta kullanacağın İngilizce pazar adını tek tıkla al.</p>
+
+                <div class="translator-card" id="search">
+                    <div class="search-card-heading">
+                        <div>
+                            <label class="input-label" for="searchInput">NE ARIYORSUN?</label>
+                            <div class="search-card-caption">CS2 item kataloğunda ara</div>
+                        </div>
+                        <span class="live-indicator"><span></span><span id="updatedAtBadge">GÜNCEL KATALOG</span></span>
+                    </div>
+                        <div class="input-wrap">
+                        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="10.8" cy="10.8" r="6.8"></circle>
+                            <path d="m16 16 4.5 4.5"></path>
+                        </svg>
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="Silah veya kaplama ara… Örn. P250"
+                            autocomplete="off"
+                            autocapitalize="off"
+                            spellcheck="false"
+                            aria-autocomplete="list"
+                            aria-controls="searchResults"
+                            aria-expanded="false"
+                            disabled
+                        >
+                        <button class="clear-button" id="clearBtn" type="button" aria-label="Aramayı temizle" hidden>×</button>
+                    </div>
+                    <div class="search-filters" aria-label="Arama filtreleri">
+                        <label class="filter-control">
+                            <span>İTEM TÜRÜ</span>
+                            <select id="typeFilter" aria-label="İtem türüne göre filtrele">
+                                <option value="skins">Silah kaplamaları</option>
+                                <option value="stickers">Çıkartmalar</option>
+                                <option value="charms">Charmlar</option>
+                            </select>
+                        </label>
+                        <label class="filter-control">
+                            <span>NADİRLİK</span>
+                            <select id="rarityFilter" aria-label="Nadirliğe göre filtrele">
+                                <option value="all">Tüm nadirlikler</option>
+                            </select>
+                        </label>
+                        <label class="filter-control">
+                            <span>SİLAH SINIFI</span>
+                            <select id="categoryFilter" aria-label="Kategoriye göre filtrele">
+                                <option value="all">Tüm kategoriler</option>
+                                <option value="Pistols">Tabancalar</option>
+                                <option value="Rifles">Tüfekler</option>
+                                <option value="SMGs">Hafif makineli</option>
+                                <option value="Heavy">Ağır silahlar</option>
+                                <option value="Knives">Bıçaklar</option>
+                                <option value="Gloves">Eldivenler</option>
+                                <option value="Equipment">Diğer</option>
+                            </select>
+                        </label>
+                        <label class="filter-control">
+                            <span>KONDİSYON</span>
+                            <select id="wearFilter" aria-label="Kondisyona göre filtrele">
+                                <option value="all">Tüm kondisyonlar</option>
+                                <option value="Factory New">Fabrikadan Yeni Çıkmış</option>
+                                <option value="Minimal Wear">Az Aşınmış</option>
+                                <option value="Field-Tested">Görevde Kullanılmış</option>
+                                <option value="Well-Worn">Eskimiş</option>
+                                <option value="Battle-Scarred">Savaş Görmüş</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div id="catalogStatus" class="catalog-status" role="status" hidden></div>
+                    <div id="searchSummary" class="search-summary" hidden aria-live="polite"></div>
+                    <div id="searchResults" class="search-results" role="listbox" aria-label="Katalog sonuçları" hidden></div>
+
+                    <div id="loading" class="loading-state" role="status">
+                        <span class="spinner" aria-hidden="true"></span>
+                        Katalog hazırlanıyor...
+                    </div>
+                    <div id="loadError" class="load-error" role="alert" hidden>
+                        <span>CS2 kataloğu yüklenemedi. İnternet bağlantını kontrol edip yeniden dene.</span>
+                        <button id="retryBtn" class="retry-button" type="button">Tekrar dene</button>
+                    </div>
+
+                    <section class="result-card" id="resultBox" aria-live="polite" hidden>
+                        <div class="result-heading">
+                            <span class="result-label">CSFLOAT ARAMA ADI</span>
+                            <span id="wearBadge" class="wear-badge" hidden></span>
+                        </div>
+                        <p class="english-name" id="englishNameDisplay"></p>
+                        <button class="copy-button" id="copyBtn" type="button">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <rect x="8" y="8" width="12" height="12" rx="2"></rect>
+                                <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>
+                            </svg>
+                            <span>Kopyala</span>
+                        </button>
+                    </section>
+                </div>
+
+                <div class="catalog-stats" aria-label="Katalog kapsamı">
+                    <div><strong id="skinCount">1.900+</strong><span>kaplama</span></div>
+                    <span class="stat-divider"></span>
+                    <div><strong id="stickerCount">11.000+</strong><span>çıkartma</span></div>
+                    <span class="stat-divider"></span>
+                    <div><strong id="charmCount">78</strong><span>charm</span></div>
+                </div>
+            </section>
+            <section class="about-section" id="about" aria-labelledby="about-heading">
+                <div class="section-overline">HIZLI · ÜCRETSİZ · TOPLULUK İÇİN</div>
+                <div class="about-content">
+                    <h2 id="about-heading">CS2 itemlerini<br>bulmanın kolay yolu.</h2>
+                    <p>Kaplama, çıkartma ve charm isimlerini Türkçe ara. Arama önerisinden itemini seçip İngilizce pazar adını kopyala; kondisyon filtresiyle aramanı netleştir.</p>
+                </div>
+                <div class="feature-list">
+                    <div><span>01</span><p><strong>Gerçek item kataloğu</strong>Görsel, nadirlik ve isim eşleşmesiyle.</p></div>
+                    <div><span>02</span><p><strong>Türkçe ve İngilizce arama</strong>Eksik yazımda da eşleşen öneriler.</p></div>
+                    <div><span>03</span><p><strong>CSFloat'a hazır</strong>Doğru pazar adını tek tıkla kopyala.</p></div>
+                </div>
+            </section>
+            <section class="support-panel" aria-labelledby="support-heading">
+                <div class="support-emblem" aria-hidden="true">
+                    <svg viewBox="0 0 32 32">
+                        <path d="M5 9.5A3.5 3.5 0 0 1 8.5 6h15A3.5 3.5 0 0 1 27 9.5v13a3.5 3.5 0 0 1-3.5 3.5h-15A3.5 3.5 0 0 1 5 22.5z"></path>
+                        <path d="M11 13v6m-3-3h6m4-2h.01M22 18h.01"></path>
+                    </svg>
+                </div>
+                <div class="support-copy">
+                    <span class="support-eyebrow">GÖNÜLLÜ DESTEK</span>
+                    <h2 id="support-heading">Bu araç ücretsiz. Destek olmak ister misin?</h2>
+                    <p>CSNAME topluluk için ücretsiz geliştiriliyor. Destek olmak istersen Steam üzerinden bir item gönderebilirsin; bu tamamen isteğe bağlıdır.</p>
+                </div>
+                <a
+                    class="support-button"
+                    href="https://steamcommunity.com/tradeoffer/new/?partner=1800489426&amp;token=jIoKxNd7"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 2a10 10 0 1 0 9.95 11.01l-5.1-.76a4.5 4.5 0 0 1-7.65 1.1l-3.01-1.42a2.8 2.8 0 1 1 1.13-2.42l3.02 1.42a4.5 4.5 0 0 1 6.52.91l5.1.76A10 10 0 0 0 12 2Zm-5.1 8.66a1.17 1.17 0 1 0-.99 2.12l3.1 1.45a2.9 2.9 0 1 0 1.01-2.12z"></path>
+                    </svg>
+                    <span>Steam trade teklifi gönder</span>
+                    <span class="support-arrow" aria-hidden="true">↗</span>
+                </a>
+                <span class="support-note">Steam üzerinden · tamamen isteğe bağlı</span>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-brand">
+                <a class="footer-brand-link" href="https://haking.tr" target="_blank" rel="noopener noreferrer" aria-label="HaKING.DEV — haking.tr">
+                    HaKING<span>.DEV</span>
+                    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3h7v7M13 3 6 10M11 9v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h3"></path></svg>
+                </a>
+                <span>CS2 İtem Arama</span>
+            </div>
+            <div class="footer-meta">
+                <span>Resmî olmayan topluluk projesi · CS2 ve CSFloat ile bağlantılı değildir.</span>
+                <span>Item verileri <a href="https://github.com/ByMykel/CSGO-API" target="_blank" rel="noreferrer">CSGO-API</a> ve oyun dil dosyalarından.</span>
+            </div>
+        </footer>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
