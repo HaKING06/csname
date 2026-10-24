@@ -1,6 +1,6 @@
 # CSNAME
 
-CSNAME is a static CS2 item finder that matches Turkish names to English market names. It includes weapon finishes, stickers, charms, item images, rarity filters ordered by item type, weapon categories, and wear filters.
+CSNAME is a static CS2 item finder that matches Turkish names to English market names. It includes weapon finishes, stickers, charms, cases, souvenir packages, capsules, and other crate items, with item images, rarity filters, weapon categories, and wear filters.
 
 The optional Steam trade link is a community-support feature; using the site never requires a contribution.
 

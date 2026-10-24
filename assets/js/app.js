@@ -36,6 +36,18 @@ const categoryNames = {
     Gloves: "Eldiven",
     Equipment: "Ekipman"
 };
+const containerTypeNames = {
+    Case: "Kasa",
+    Souvenir: "Hatıra paketi",
+    "Sticker Capsule": "Çıkartma kapsülü",
+    "Autograph Capsule": "İmza kapsülü",
+    Graffiti: "Grafiti kutusu",
+    Pins: "Rozet kapsülü",
+    "Music Kit Box": "Müzik kiti kutusu",
+    "Patch Capsule": "Yama paketi",
+    "Souvenir Highlight": "Hatıra paketi",
+    Other: "Açılabilir eşya"
+};
 const rarityNames = {
     "Base Grade": "Temel Sınıf",
     "Consumer Grade": "Tüketici Sınıfı",
@@ -70,9 +82,10 @@ const rarityOrderByType = {
     charms: ["High Grade", "Remarkable", "Exotic", "Extraordinary"]
 };
 
-let catalogs = { skins: [], stickers: [], charms: [] };
+let catalogs = { skins: [], stickers: [], charms: [], containers: [] };
 let currentEnglishName = "";
 let activeResultIndex = -1;
+let autoSelectedType = false;
 let toastTimeout;
 
 function normalize(value) {
@@ -139,7 +152,7 @@ async function initData() {
             throw new Error("Item kataloğunun biçimi beklenenden farklı.");
         }
 
-        catalogs = { skins: [], stickers: [], charms: [] };
+        catalogs = { skins: [], stickers: [], charms: [], containers: [] };
         for (const item of data.items) {
             if (!catalogs[item.type] || typeof item.englishName !== "string" || typeof item.turkishName !== "string") continue;
             catalogs[item.type].push(makeItem(item));
@@ -151,6 +164,7 @@ async function initData() {
         document.getElementById("skinCount").textContent = catalogs.skins.length.toLocaleString("tr-TR");
         document.getElementById("stickerCount").textContent = catalogs.stickers.length.toLocaleString("tr-TR");
         document.getElementById("charmCount").textContent = catalogs.charms.length.toLocaleString("tr-TR");
+        document.getElementById("containerCount").textContent = catalogs.containers.length.toLocaleString("tr-TR");
         populateRarityFilter();
         if (data.updatedAt) {
             const updatedAt = new Date(data.updatedAt);
@@ -182,6 +196,32 @@ function matchesSearchTerms(item, terms) {
     return terms.every((term) => nameWords.some((word) => word.startsWith(term)));
 }
 
+function inferSearchType(query) {
+    const normalizedQuery = normalize(query);
+    const containerTerms = [
+        "kasa",
+        "kasasi",
+        "kapsul",
+        "hatira",
+        "paket",
+        "imza",
+        "cikartma",
+        "rozet",
+        "yama",
+        "terminal",
+        "capsule",
+        "souvenir",
+        "autograph",
+        "package",
+        "box",
+        "crate"
+    ];
+    const words = normalizedQuery.split(" ");
+    const hasContainerTerm = containerTerms.some((term) => words.some((word) => word.startsWith(term)));
+    const searchesForCase = words.includes("case") && !words.includes("hardened");
+    return hasContainerTerm || searchesForCase ? "containers" : "";
+}
+
 function updateFilters() {
     const isSkin = typeFilter.value === "skins";
     if (!isSkin) {
@@ -197,6 +237,8 @@ function updateFilters() {
         ? "Çıkartma ara… Örn. Nişancı"
         : typeFilter.value === "charms"
             ? "Charm ara… Örn. Minik Ava"
+            : typeFilter.value === "containers"
+                ? "Kasa, paket veya kapsül ara… Örn. Kilowatt Kasası"
             : "Silah veya kaplama ara… Örn. P250";
 }
 
@@ -301,7 +343,9 @@ function addSearchResult(item, wear) {
     englishName.textContent = item.englishName + (wear ? ` (${wear})` : "");
     const category = document.createElement("span");
     category.className = "search-result-rarity";
-    category.textContent = item.rarity ? rarityNames[item.rarity] || item.rarity : item.categoryLabel;
+    category.textContent = item.type === "containers"
+        ? containerTypeNames[item.category] || containerTypeNames.Other
+        : item.rarity ? rarityNames[item.rarity] || item.rarity : item.categoryLabel;
     category.style.setProperty("--rarity-color", item.rarityColor);
     details.append(englishName, category);
     content.append(name, details);
@@ -342,7 +386,12 @@ function renderResults({ browse = false } = {}) {
         emptyState.textContent = "Arama terimini kısaltmayı veya filtreleri değiştirmeyi dene.";
         searchResults.appendChild(emptyState);
     } else {
-        const typeName = { skins: "kaplama", stickers: "çıkartma", charms: "charm" }[typeFilter.value];
+        const typeName = {
+            skins: "kaplama",
+            stickers: "çıkartma",
+            charms: "charm",
+            containers: "kasa / kapsül / paket"
+        }[typeFilter.value];
         const selectedRarity = rarityFilter.value === "all" ? "" : ` · ${rarityNames[rarityFilter.value] || rarityFilter.value}`;
         searchSummary.textContent = `${total.toLocaleString("tr-TR")} ${typeName}${total > MAX_RESULTS ? ` · ilk ${MAX_RESULTS} sonuç` : ""}${selectedRarity}${wear ? ` · ${findWearCondition(wear)?.turkish || wear}` : ""}`;
         for (const item of results) addSearchResult(item, wear);
@@ -392,6 +441,16 @@ function showToast(message) {
 
 searchInput.addEventListener("input", () => {
     clearButton.hidden = searchInput.value.length === 0;
+    const inferredType = inferSearchType(searchInput.value);
+    if (inferredType && typeFilter.value === "skins") {
+        typeFilter.value = inferredType;
+        autoSelectedType = true;
+        updateFilters();
+    } else if (!inferredType && autoSelectedType) {
+        typeFilter.value = "skins";
+        autoSelectedType = false;
+        updateFilters();
+    }
     renderResults();
 });
 
@@ -414,6 +473,7 @@ searchInput.addEventListener("keydown", (event) => {
 });
 
 typeFilter.addEventListener("change", () => {
+    autoSelectedType = false;
     updateFilters();
     resultBox.hidden = true;
     catalogStatus.hidden = true;
