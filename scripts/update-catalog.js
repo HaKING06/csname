@@ -7,7 +7,8 @@ const sources = {
     skins: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json",
     stickers: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/stickers.json",
     charms: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/keychains.json",
-    containers: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/crates.json"
+    containers: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/crates.json",
+    musicKits: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/music_kits.json"
 };
 
 const wearConditions = new Set([
@@ -53,6 +54,8 @@ function safeRarityColor(value) {
 
 function localizeContainerName(name) {
     return name
+        .replace(/\bDreams\s*&\s*Nightmares\b/gi, "Rüyalar ve Kabuslar")
+        .replace(/\bKilowatt\b/gi, "Kilovat")
         .replace(/\bAutograph Capsule\b/gi, "İmza Kapsülü")
         .replace(/\bCollectible Pins Capsule\b/gi, "Koleksiyonluk Rozet Kapsülü")
         .replace(/\bSticker Capsule\b/gi, "Çıkartma Kapsülü")
@@ -155,6 +158,24 @@ function buildCatalog(data) {
         });
     }
 
+    const seenMusicKits = new Set();
+    for (const musicKit of data.musicKits) {
+        const englishName = musicKit.market_hash_name
+            || (/^(?:StatTrak™ )?Music Kit \| /i.test(musicKit.name) ? musicKit.name : `Music Kit | ${musicKit.name}`);
+        if (typeof englishName !== "string" || !englishName.trim() || seenMusicKits.has(normalize(englishName))) continue;
+        seenMusicKits.add(normalize(englishName));
+        items.push({
+            type: "music_kits",
+            englishName,
+            turkishName: englishName.replace(/^(StatTrak™ )?Music Kit \| /i, (_, statTrak = "") => `${statTrak}Müzik Kiti | `),
+            category: "Music Kits",
+            rarity: musicKit.rarity?.name || "",
+            rarityColor: safeRarityColor(musicKit.rarity?.color),
+            image: musicKit.image || "",
+            wears: []
+        });
+    }
+
     return items;
 }
 
@@ -170,7 +191,7 @@ async function main() {
     );
     const items = buildCatalog(Object.fromEntries(entries));
     const counts = Object.fromEntries(
-        ["skins", "stickers", "charms", "containers"].map((type) => [type, items.filter((item) => item.type === type).length])
+        ["skins", "stickers", "charms", "containers", "music_kits"].map((type) => [type, items.filter((item) => item.type === type).length])
     );
 
     if (Object.values(counts).some((count) => count === 0)) {
@@ -187,7 +208,7 @@ async function main() {
     fs.mkdirSync(path.dirname(outputPath), { recursive: true });
     fs.writeFileSync(outputPath, `${JSON.stringify(catalog)}\n`, "utf8");
     console.log(`Updated ${outputPath}`);
-    console.log(`${counts.skins} skins, ${counts.stickers} stickers, ${counts.charms} charms, ${counts.containers} containers`);
+    console.log(`${counts.skins} skins, ${counts.stickers} stickers, ${counts.charms} charms, ${counts.containers} containers, ${counts.music_kits} music kits`);
     console.log(`${(Buffer.byteLength(JSON.stringify(catalog)) / (1024 * 1024)).toFixed(2)} MB`);
 }
 
