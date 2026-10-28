@@ -98,7 +98,11 @@ async function getDailyAverage(marketHashName) {
 
 export async function onRequestGet({ request, env = {} }) {
     if (new URL(request.url).searchParams.get("health") === "1") {
-        return jsonResponse({ ok: true });
+        return jsonResponse({
+            ok: true,
+            apiKeyConfigured: Boolean(env.CSFLOAT_API_KEY?.trim()),
+            deploymentMode: "cloudflare-pages-worker"
+        }, 200, "no-store");
     }
 
     const marketHashName = new URL(request.url).searchParams.get("market_hash_name")?.trim();

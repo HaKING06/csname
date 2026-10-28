@@ -439,7 +439,7 @@ async function loadCsfloatPrice(name) {
             data = JSON.parse(responseText);
         } catch {
             if (response.status === 404) {
-                throw new Error("Cloudflare Pages fiyat işlevi bu yayında bulunamadı. GitHub deposunun kök dizininde functions/api/csfloat-price.js olduğundan emin olup yeni dağıtım başlat.");
+                throw new Error("Fiyat rotası dağıtımda etkin değil. Depo kökündeki _worker.js dosyasını ekleyip Cloudflare Pages'te yeni Git dağıtımı başlat.");
             }
             throw new Error(`Fiyat servisi geçersiz yanıt verdi (${response.status}).`);
         }
@@ -474,6 +474,7 @@ async function loadCsfloatPrice(name) {
     } catch (error) {
         if (requestId !== priceRequestId) return;
         console.error("CSFloat satış ortalaması alınamadı:", error);
+        priceCaption.textContent = "CSFloat · fiyat alınamadı";
         priceValue.textContent = "Şu an kullanılamıyor";
         priceMeta.textContent = error.message || "Fiyat servisine ulaşılamadı; daha sonra tekrar dene.";
     }

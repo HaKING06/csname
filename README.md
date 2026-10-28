@@ -16,7 +16,7 @@ Open `http://localhost:4173`.
 
 ## Publish
 
-The site has no build step or server-side runtime. Publish the project directory as the static site root with GitHub Pages, Cloudflare Pages, Netlify, or another static host. Keep the `assets` directory alongside `index.html`.
+The frontend has no build step. Publish the project directory as the static site root and keep the `assets` directory alongside `index.html`. The optional live CSFloat price endpoint requires Cloudflare Pages with the root `_worker.js`; other static hosts can serve the site but will not run that endpoint.
 
 ## Refresh item data
 
@@ -34,9 +34,11 @@ The GitHub Actions workflow in `.github/workflows/update-catalog.yml` refreshes 
 
 When an item is selected, `functions/api/csfloat-price.js` uses the `CSFLOAT_API_KEY` Cloudflare Pages secret to show the lowest active CSFloat listing. If the secret is not configured, it falls back to the latest daily average sale price from CSFloat's public history graph. Never put the key in frontend code, Git, or a GitHub Actions log.
 
-Deploy the GitHub repository with **Git integration** (not dashboard Direct Upload), set the project root to the repository root, leave the build command empty, and set the build output directory to `.`. The `functions` directory must sit beside `index.html` in that root. In Cloudflare, open **Workers & Pages → your Pages project → Settings → Variables and Secrets**, add `CSFLOAT_API_KEY` as an encrypted secret for the Production environment, and deploy again. GitHub repository secrets are not automatically available to a Cloudflare Pages Function.
+The repository includes a root `_worker.js` entry point for Cloudflare Pages advanced mode; it explicitly routes `/api/csfloat-price` and forwards all other requests to static assets. Deploy using **Git integration** (not dashboard Direct Upload), set the project root to the repository root, leave the build command empty, and set the build output directory to `.`. Cloudflare's advanced-mode Worker takes precedence over file-based `functions/` routing.
 
-Check that the function deployed by opening `/api/csfloat-price?health=1` on the production domain; it should return `{"ok":true}`. A 404 means the active deployment did not include the root `functions` directory. A price lookup that reports the key was rejected means the secret value or its Production binding needs correction.
+In Cloudflare, open **Workers & Pages → your Pages project → Settings → Variables and Secrets**, add `CSFLOAT_API_KEY` as an encrypted **Secret** for the Production environment (not a plain text Variable), then trigger a new production deployment. GitHub repository secrets are not automatically available to a Cloudflare Pages Function.
+
+Check the production deployment by opening `/api/csfloat-price?health=1`; it should return `{"ok":true,"apiKeyConfigured":true,"deploymentMode":"cloudflare-pages-worker"}`. A 404 means the active build is still serving static files and did not deploy the root `_worker.js`. If `apiKeyConfigured` is false, add `CSFLOAT_API_KEY` as a Production Secret and redeploy. A price lookup that reports the key was rejected means the secret value itself is invalid.
 
 ## Data sources
 
