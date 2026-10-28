@@ -34,7 +34,9 @@ The GitHub Actions workflow in `.github/workflows/update-catalog.yml` refreshes 
 
 When an item is selected, `functions/api/csfloat-price.js` uses the `CSFLOAT_API_KEY` Cloudflare Pages secret to show the lowest active CSFloat listing. If the secret is not configured, it falls back to the latest daily average sale price from CSFloat's public history graph. Never put the key in frontend code, Git, or a GitHub Actions log.
 
-Deploy the repository root as a Cloudflare Pages project so Cloudflare detects the `functions` directory. In Cloudflare, open **Workers & Pages → your Pages project → Settings → Variables and Secrets**, add `CSFLOAT_API_KEY` as an encrypted secret for the Production environment, then redeploy. GitHub repository secrets are not automatically available to a Cloudflare Pages Function. The regular catalog search works on a plain static host, but inline CSFloat prices require Cloudflare Pages Functions.
+Deploy the GitHub repository with **Git integration** (not dashboard Direct Upload), set the project root to the repository root, leave the build command empty, and set the build output directory to `.`. The `functions` directory must sit beside `index.html` in that root. In Cloudflare, open **Workers & Pages → your Pages project → Settings → Variables and Secrets**, add `CSFLOAT_API_KEY` as an encrypted secret for the Production environment, and deploy again. GitHub repository secrets are not automatically available to a Cloudflare Pages Function.
+
+Check that the function deployed by opening `/api/csfloat-price?health=1` on the production domain; it should return `{"ok":true}`. A 404 means the active deployment did not include the root `functions` directory. A price lookup that reports the key was rejected means the secret value or its Production binding needs correction.
 
 ## Data sources
 

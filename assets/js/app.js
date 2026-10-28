@@ -425,19 +425,32 @@ async function loadCsfloatPrice(name) {
     const priceInfo = document.getElementById("priceInfo");
     const priceValue = document.getElementById("priceValue");
     const priceMeta = document.getElementById("priceMeta");
+    const priceCaption = priceInfo.querySelector(".price-caption");
     priceInfo.hidden = false;
+    priceCaption.textContent = "CSFloat · fiyat kontrol ediliyor";
     priceValue.textContent = "Yükleniyor…";
     priceMeta.textContent = "CSFloat günlük satış verisi alınıyor";
 
     try {
         const response = await fetch(`/api/csfloat-price?market_hash_name=${encodeURIComponent(name)}`);
-        const data = await response.json();
+        const responseText = await response.text();
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch {
+            if (response.status === 404) {
+                throw new Error("Cloudflare Pages fiyat işlevi bu yayında bulunamadı. GitHub deposunun kök dizininde functions/api/csfloat-price.js olduğundan emin olup yeni dağıtım başlat.");
+            }
+            throw new Error(`Fiyat servisi geçersiz yanıt verdi (${response.status}).`);
+        }
         if (!response.ok) throw new Error(data.error || `CSFloat fiyat verisi alınamadı (${response.status}).`);
         if (requestId !== priceRequestId) return;
 
         if (!data.priceCents || !Number.isFinite(data.priceCents)) {
-            priceValue.textContent = "Veri yok";
-            priceMeta.textContent = "Bu item için satış geçmişi bulunamadı.";
+            priceValue.textContent = data.priceKind === "lowest_listing" ? "Aktif ilan yok" : "Veri yok";
+            priceMeta.textContent = data.priceKind === "lowest_listing"
+                ? "CSFloat'ta bu isimle satışta olan ilan bulunamadı."
+                : "Bu item için satış geçmişi bulunamadı.";
             return;
         }
 
@@ -450,19 +463,19 @@ async function loadCsfloatPrice(name) {
             ? new Date(data.day).toLocaleDateString("tr-TR", { day: "2-digit", month: "short", year: "numeric" })
             : "";
         if (data.priceKind === "lowest_listing") {
-            priceInfo.querySelector(".price-caption").textContent = "CSFloat · en düşük aktif ilan";
+            priceCaption.textContent = "CSFloat · en düşük aktif ilan";
             priceMeta.textContent = data.day
                 ? `İlan tarihi · ${new Date(data.day).toLocaleDateString("tr-TR", { day: "2-digit", month: "short", year: "numeric" })}`
                 : "Güncel satış ilanı";
         } else {
-            priceInfo.querySelector(".price-caption").textContent = "CSFloat · son satış ortalaması";
+            priceCaption.textContent = "CSFloat · son satış ortalaması";
             priceMeta.textContent = `Son tamamlanan günlük ortalama${priceDate ? ` · ${priceDate}` : ""}${saleCount}`;
         }
     } catch (error) {
         if (requestId !== priceRequestId) return;
         console.error("CSFloat satış ortalaması alınamadı:", error);
         priceValue.textContent = "Şu an kullanılamıyor";
-        priceMeta.textContent = "Fiyat servisine ulaşılamadı; daha sonra tekrar dene.";
+        priceMeta.textContent = error.message || "Fiyat servisine ulaşılamadı; daha sonra tekrar dene.";
     }
 }
 

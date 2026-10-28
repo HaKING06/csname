@@ -24,6 +24,11 @@ async function getLowestListing(marketHashName, apiKey) {
 
     if (!response.ok) {
         console.error(`CSFloat listings request returned HTTP ${response.status}.`);
+        if (response.status === 401 || response.status === 403) {
+            return jsonResponse({
+                error: "Cloudflare'daki CSFLOAT_API_KEY kabul edilmedi. Secret değerini ve Production ortamına eklendiğini kontrol edip yeniden dağıt."
+            }, 502, LISTING_CACHE_CONTROL);
+        }
         return jsonResponse({ error: "CSFloat ilan fiyatı alınamadı." }, 502, LISTING_CACHE_CONTROL);
     }
 
@@ -92,6 +97,10 @@ async function getDailyAverage(marketHashName) {
 }
 
 export async function onRequestGet({ request, env = {} }) {
+    if (new URL(request.url).searchParams.get("health") === "1") {
+        return jsonResponse({ ok: true });
+    }
+
     const marketHashName = new URL(request.url).searchParams.get("market_hash_name")?.trim();
     if (!marketHashName || marketHashName.length > 200) {
         return jsonResponse({ error: "Geçerli bir item market adı gerekli." }, 400);

@@ -189,10 +189,14 @@ function buildCatalog(data) {
     for (const agent of data.agents) {
         const englishName = agent.market_hash_name || agent.name;
         if (typeof englishName !== "string" || !englishName.trim()) continue;
+        const agentTokenKey = tokensByKey.get(`csgo_${agent.original?.name || ""}`.toLowerCase());
+        const localizedName = agentTokenKey && typeof trTokens[agentTokenKey] === "string"
+            ? trTokens[agentTokenKey].replace(/\\(["'])/g, "$1").trim()
+            : localizeAgentName(englishName);
         items.push({
             type: "agents",
             englishName,
-            turkishName: `Ajan | ${localizeAgentName(englishName)}`,
+            turkishName: `Ajan | ${localizedName}`,
             category: agent.team?.name || "Other",
             rarity: agent.rarity?.name || "",
             rarityColor: safeRarityColor(agent.rarity?.color),
