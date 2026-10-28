@@ -622,6 +622,42 @@ h1 span {
     overflow-wrap: anywhere;
 }
 
+.price-info {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 4px 12px;
+    margin: -2px 0 15px;
+    padding: 11px 12px;
+    border: 1px solid rgba(101, 223, 202, 0.14);
+    border-radius: 7px;
+    background: rgba(8, 15, 21, 0.46);
+}
+
+.price-info[hidden] {
+    display: none;
+}
+
+.price-caption,
+.price-meta {
+    color: #91a0ae;
+    font-size: 10px;
+}
+
+.price-value,
+#priceValue {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    color: #81e1d1;
+    font-size: 17px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.price-meta {
+    grid-column: 1;
+}
+
 .copy-button {
     display: flex;
     width: 100%;

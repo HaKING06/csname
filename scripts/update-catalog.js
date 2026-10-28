@@ -8,7 +8,8 @@ const sources = {
     stickers: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/stickers.json",
     charms: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/keychains.json",
     containers: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/crates.json",
-    musicKits: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/music_kits.json"
+    musicKits: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/music_kits.json",
+    agents: "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/agents.json"
 };
 
 const wearConditions = new Set([
@@ -76,6 +77,15 @@ function localizeContainerName(name) {
         .replace(/\bContenders\b/gi, "Adaylar")
         .replace(/\bChampions\b/gi, "Şampiyonlar")
         .replace(/\bFinalists\b/gi, "Finalistler");
+}
+
+function localizeAgentName(name) {
+    return name
+        .replace(/\bThe Professionals\b/gi, "Profesyoneller")
+        .replace(/\bThe Elite Crew\b/gi, "Elit Ekip")
+        .replace(/\bThe Phoenix\b/gi, "Phoenix")
+        .replace(/\bSabre\b/gi, "Sabre")
+        .replace(/\bSWAT\b/gi, "SWAT");
 }
 
 function buildCatalog(data) {
@@ -176,6 +186,21 @@ function buildCatalog(data) {
         });
     }
 
+    for (const agent of data.agents) {
+        const englishName = agent.market_hash_name || agent.name;
+        if (typeof englishName !== "string" || !englishName.trim()) continue;
+        items.push({
+            type: "agents",
+            englishName,
+            turkishName: `Ajan | ${localizeAgentName(englishName)}`,
+            category: agent.team?.name || "Other",
+            rarity: agent.rarity?.name || "",
+            rarityColor: safeRarityColor(agent.rarity?.color),
+            image: agent.image || "",
+            wears: []
+        });
+    }
+
     return items;
 }
 
@@ -191,7 +216,7 @@ async function main() {
     );
     const items = buildCatalog(Object.fromEntries(entries));
     const counts = Object.fromEntries(
-        ["skins", "stickers", "charms", "containers", "music_kits"].map((type) => [type, items.filter((item) => item.type === type).length])
+        ["skins", "stickers", "charms", "containers", "music_kits", "agents"].map((type) => [type, items.filter((item) => item.type === type).length])
     );
 
     if (Object.values(counts).some((count) => count === 0)) {
@@ -208,7 +233,7 @@ async function main() {
     fs.mkdirSync(path.dirname(outputPath), { recursive: true });
     fs.writeFileSync(outputPath, `${JSON.stringify(catalog)}\n`, "utf8");
     console.log(`Updated ${outputPath}`);
-    console.log(`${counts.skins} skins, ${counts.stickers} stickers, ${counts.charms} charms, ${counts.containers} containers, ${counts.music_kits} music kits`);
+    console.log(`${counts.skins} skins, ${counts.stickers} stickers, ${counts.charms} charms, ${counts.containers} containers, ${counts.music_kits} music kits, ${counts.agents} agents`);
     console.log(`${(Buffer.byteLength(JSON.stringify(catalog)) / (1024 * 1024)).toFixed(2)} MB`);
 }
 

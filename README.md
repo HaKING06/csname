@@ -1,6 +1,6 @@
 # CSNAME
 
-CSNAME is a static CS2 item finder that matches Turkish names to English market names. It includes weapon finishes, stickers, charms, music kits, cases, souvenir packages, capsules, and other crate items, with item images, rarity filters, weapon categories, and wear filters.
+CSNAME is a static CS2 item finder that matches Turkish names to English market names. It includes weapon finishes, stickers, charms, music kits, agents, cases, souvenir packages, capsules, and other crate items, with item images, rarity filters, weapon categories, and wear filters.
 
 The optional Steam trade link is a community-support feature; using the site never requires a contribution.
 
@@ -27,6 +27,14 @@ node scripts/update-catalog.js
 ```
 
 The generated catalog records its update date and source URLs. Item images are served by the upstream image hosts.
+
+The GitHub Actions workflow in `.github/workflows/update-catalog.yml` refreshes and commits the catalog daily after the project is published to GitHub. Cloudflare Pages deployments connected to the repository will publish each catalog update automatically.
+
+## CSFloat prices
+
+When an item is selected, `functions/api/csfloat-price.js` uses the `CSFLOAT_API_KEY` Cloudflare Pages secret to show the lowest active CSFloat listing. If the secret is not configured, it falls back to the latest daily average sale price from CSFloat's public history graph. Never put the key in frontend code, Git, or a GitHub Actions log.
+
+Deploy the repository root as a Cloudflare Pages project so Cloudflare detects the `functions` directory. In Cloudflare, open **Workers & Pages → your Pages project → Settings → Variables and Secrets**, add `CSFLOAT_API_KEY` as an encrypted secret for the Production environment, then redeploy. GitHub repository secrets are not automatically available to a Cloudflare Pages Function. The regular catalog search works on a plain static host, but inline CSFloat prices require Cloudflare Pages Functions.
 
 ## Data sources
 

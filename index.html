@@ -74,6 +74,7 @@
                                 <option value="charms">Charmlar</option>
                                 <option value="containers">Kasalar, paketler ve kapsüller</option>
                                 <option value="music_kits">Müzik kitleri</option>
+                                <option value="agents">Ajanlar</option>
                             </select>
                         </label>
                         <label class="filter-control">
@@ -127,6 +128,11 @@
                             <span id="wearBadge" class="wear-badge" hidden></span>
                         </div>
                         <p class="english-name" id="englishNameDisplay"></p>
+                        <div id="priceInfo" class="price-info" role="status" hidden>
+                            <span class="price-caption">CSFloat · son satış ortalaması</span>
+                            <strong id="priceValue"></strong>
+                            <span id="priceMeta" class="price-meta"></span>
+                        </div>
                         <button class="copy-button" id="copyBtn" type="button">
                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                 <rect x="8" y="8" width="12" height="12" rx="2"></rect>
@@ -147,6 +153,8 @@
                     <div><strong id="containerCount">—</strong><span>kasa · paket · kapsül</span></div>
                     <span class="stat-divider"></span>
                     <div><strong id="musicKitCount">—</strong><span>müzik kiti</span></div>
+                    <span class="stat-divider"></span>
+                    <div><strong id="agentCount">—</strong><span>ajan</span></div>
                 </div>
             </section>
             <section class="about-section" id="about" aria-labelledby="about-heading">

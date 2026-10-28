@@ -82,10 +82,11 @@ const rarityOrderByType = {
     charms: ["High Grade", "Remarkable", "Exotic", "Extraordinary"]
 };
 
-let catalogs = { skins: [], stickers: [], charms: [], containers: [], music_kits: [] };
+let catalogs = { skins: [], stickers: [], charms: [], containers: [], music_kits: [], agents: [] };
 let currentEnglishName = "";
 let activeResultIndex = -1;
 let autoSelectedType = false;
+let priceRequestId = 0;
 let toastTimeout;
 
 function normalize(value) {
@@ -152,7 +153,7 @@ async function initData() {
             throw new Error("Item kataloğunun biçimi beklenenden farklı.");
         }
 
-        catalogs = { skins: [], stickers: [], charms: [], containers: [], music_kits: [] };
+        catalogs = { skins: [], stickers: [], charms: [], containers: [], music_kits: [], agents: [] };
         for (const item of data.items) {
             if (!catalogs[item.type] || typeof item.englishName !== "string" || typeof item.turkishName !== "string") continue;
             catalogs[item.type].push(makeItem(item));
@@ -166,6 +167,7 @@ async function initData() {
         document.getElementById("charmCount").textContent = catalogs.charms.length.toLocaleString("tr-TR");
         document.getElementById("containerCount").textContent = catalogs.containers.length.toLocaleString("tr-TR");
         document.getElementById("musicKitCount").textContent = catalogs.music_kits.length.toLocaleString("tr-TR");
+        document.getElementById("agentCount").textContent = catalogs.agents.length.toLocaleString("tr-TR");
         populateRarityFilter();
         if (data.updatedAt) {
             const updatedAt = new Date(data.updatedAt);
@@ -211,6 +213,11 @@ function inferSearchType(query) {
 
     if (hasTerm("cikartma", "sticker")) return "stickers";
     if (hasTerm("sus", "charm", "anahtarlik")) return "charms";
+    if (hasTerm("ajan", "agent")) return "agents";
+    const agentTerms = words.filter((word) => word.length >= 2);
+    if (agentTerms.length >= 2 && catalogs.agents.some((item) => matchesSearchTerms(item, agentTerms))) {
+        return "agents";
+    }
     return "";
 }
 
@@ -233,6 +240,8 @@ function updateFilters() {
                 ? "Kasa, paket veya kapsül ara… Örn. Kilowatt Kasası"
                 : typeFilter.value === "music_kits"
                     ? "Müzik kiti ara… Örn. Denzel Curry"
+                    : typeFilter.value === "agents"
+                        ? "Ajan ara… Örn. Sir Bloody Darryl"
             : "Silah veya kaplama ara… Örn. P250";
 }
 
@@ -386,7 +395,8 @@ function renderResults({ browse = false } = {}) {
             stickers: "çıkartma",
             charms: "charm",
             containers: "kasa / kapsül / paket",
-            music_kits: "müzik kiti"
+            music_kits: "müzik kiti",
+            agents: "ajan"
         }[typeFilter.value];
         const selectedRarity = rarityFilter.value === "all" ? "" : ` · ${rarityNames[rarityFilter.value] || rarityFilter.value}`;
         searchSummary.textContent = `${total.toLocaleString("tr-TR")} ${typeName}${total > MAX_RESULTS ? ` · ilk ${MAX_RESULTS} sonuç` : ""}${selectedRarity}${wear ? ` · ${findWearCondition(wear)?.turkish || wear}` : ""}`;
@@ -407,6 +417,53 @@ function showResult(name, wear = "") {
     searchSummary.hidden = true;
     searchInput.setAttribute("aria-expanded", "false");
     copyButton.querySelector("span").textContent = "Kopyala";
+    loadCsfloatPrice(name);
+}
+
+async function loadCsfloatPrice(name) {
+    const requestId = ++priceRequestId;
+    const priceInfo = document.getElementById("priceInfo");
+    const priceValue = document.getElementById("priceValue");
+    const priceMeta = document.getElementById("priceMeta");
+    priceInfo.hidden = false;
+    priceValue.textContent = "Yükleniyor…";
+    priceMeta.textContent = "CSFloat günlük satış verisi alınıyor";
+
+    try {
+        const response = await fetch(`/api/csfloat-price?market_hash_name=${encodeURIComponent(name)}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || `CSFloat fiyat verisi alınamadı (${response.status}).`);
+        if (requestId !== priceRequestId) return;
+
+        if (!data.priceCents || !Number.isFinite(data.priceCents)) {
+            priceValue.textContent = "Veri yok";
+            priceMeta.textContent = "Bu item için satış geçmişi bulunamadı.";
+            return;
+        }
+
+        priceValue.textContent = new Intl.NumberFormat("tr-TR", {
+            style: "currency",
+            currency: data.currency || "USD"
+        }).format(data.priceCents / 100);
+        const saleCount = Number.isFinite(data.saleCount) ? ` · ${data.saleCount.toLocaleString("tr-TR")} satış` : "";
+        const priceDate = data.day
+            ? new Date(data.day).toLocaleDateString("tr-TR", { day: "2-digit", month: "short", year: "numeric" })
+            : "";
+        if (data.priceKind === "lowest_listing") {
+            priceInfo.querySelector(".price-caption").textContent = "CSFloat · en düşük aktif ilan";
+            priceMeta.textContent = data.day
+                ? `İlan tarihi · ${new Date(data.day).toLocaleDateString("tr-TR", { day: "2-digit", month: "short", year: "numeric" })}`
+                : "Güncel satış ilanı";
+        } else {
+            priceInfo.querySelector(".price-caption").textContent = "CSFloat · son satış ortalaması";
+            priceMeta.textContent = `Son tamamlanan günlük ortalama${priceDate ? ` · ${priceDate}` : ""}${saleCount}`;
+        }
+    } catch (error) {
+        if (requestId !== priceRequestId) return;
+        console.error("CSFloat satış ortalaması alınamadı:", error);
+        priceValue.textContent = "Şu an kullanılamıyor";
+        priceMeta.textContent = "Fiyat servisine ulaşılamadı; daha sonra tekrar dene.";
+    }
 }
 
 function setActiveResult(nextIndex) {
