@@ -363,7 +363,7 @@ function addSearchResult(item, wear) {
         const turkishWear = wear ? ` (${findWearCondition(wear)?.turkish || wear})` : "";
         searchInput.value = `${item.turkishName}${turkishWear}`;
         clearButton.hidden = false;
-        showResult(item.englishName + (wear ? ` (${wear})` : ""), wear);
+        showResult(item.englishName + (wear ? ` (${wear})` : ""), wear, item.type);
     });
     searchResults.appendChild(button);
 }
@@ -407,7 +407,7 @@ function renderResults({ browse = false } = {}) {
     searchInput.setAttribute("aria-expanded", "true");
 }
 
-function showResult(name, wear = "") {
+function showResult(name, wear = "", type = "") {
     currentEnglishName = name;
     englishNameDisplay.textContent = name;
     wearBadge.textContent = wear ? findWearCondition(wear)?.turkish || wear : "";
@@ -417,16 +417,22 @@ function showResult(name, wear = "") {
     searchSummary.hidden = true;
     searchInput.setAttribute("aria-expanded", "false");
     copyButton.querySelector("span").textContent = "Kopyala";
-    loadCsfloatPrice(name);
+    loadCsfloatPrice(name, type, wear);
 }
 
-async function loadCsfloatPrice(name) {
+async function loadCsfloatPrice(name, type, wear) {
     const requestId = ++priceRequestId;
     const priceInfo = document.getElementById("priceInfo");
     const priceValue = document.getElementById("priceValue");
     const priceMeta = document.getElementById("priceMeta");
     const priceCaption = priceInfo.querySelector(".price-caption");
     priceInfo.hidden = false;
+    if (type === "skins" && !wear) {
+        priceCaption.textContent = "CSFloat · kondisyon gerekli";
+        priceValue.textContent = "Kondisyon seç";
+        priceMeta.textContent = "Silah skininin CSFloat fiyatını görmek için üstteki Kondisyon filtresinden bir kondisyon seç.";
+        return;
+    }
     priceCaption.textContent = "CSFloat · fiyat kontrol ediliyor";
     priceValue.textContent = "Yükleniyor…";
     priceMeta.textContent = "CSFloat günlük satış verisi alınıyor";
@@ -439,7 +445,7 @@ async function loadCsfloatPrice(name) {
             data = JSON.parse(responseText);
         } catch {
             if (response.status === 404) {
-                throw new Error("Fiyat rotası dağıtımda etkin değil. Depo kökündeki _worker.js dosyasını ekleyip Cloudflare Pages'te yeni Git dağıtımı başlat.");
+                throw new Error("Fiyat rotası dağıtımda etkin değil. Cloudflare Worker dağıtımını kontrol edip yeniden dağıt.");
             }
             throw new Error(`Fiyat servisi geçersiz yanıt verdi (${response.status}).`);
         }
