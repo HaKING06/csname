@@ -101,7 +101,7 @@ export async function onRequestGet({ request, env = {} }) {
         return jsonResponse({
             ok: true,
             apiKeyConfigured: Boolean(env.CSFLOAT_API_KEY?.trim()),
-            deploymentMode: "cloudflare-pages-worker"
+            deploymentMode: "cloudflare-worker"
         }, 200, "no-store");
     }
 

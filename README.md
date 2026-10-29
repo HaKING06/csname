@@ -16,7 +16,7 @@ Open `http://localhost:4173`.
 
 ## Publish
 
-The frontend has no build step. Publish the project directory as the static site root and keep the `assets` directory alongside `index.html`. The optional live CSFloat price endpoint requires Cloudflare Pages with the root `_worker.js`; other static hosts can serve the site but will not run that endpoint.
+The frontend has no build step. Publish the project directory as the static site root and keep the `assets` directory alongside `index.html`. The optional live CSFloat price endpoint requires the Cloudflare Worker configured in `wrangler.jsonc`; other static hosts can serve the site but will not run that endpoint.
 
 ## Refresh item data
 
@@ -28,17 +28,17 @@ node scripts/update-catalog.js
 
 The generated catalog records its update date and source URLs. Item images are served by the upstream image hosts.
 
-The GitHub Actions workflow in `.github/workflows/update-catalog.yml` refreshes and commits the catalog daily after the project is published to GitHub. Cloudflare Pages deployments connected to the repository will publish each catalog update automatically.
+The GitHub Actions workflow in `.github/workflows/update-catalog.yml` refreshes and commits the catalog daily after the project is published to GitHub. Cloudflare Workers Builds connected to the repository will publish each catalog update automatically.
 
 ## CSFloat prices
 
-When an item is selected, `functions/api/csfloat-price.js` uses the `CSFLOAT_API_KEY` Cloudflare Pages secret to show the lowest active CSFloat listing. If the secret is not configured, it falls back to the latest daily average sale price from CSFloat's public history graph. Never put the key in frontend code, Git, or a GitHub Actions log.
+When an item is selected, `functions/api/csfloat-price.js` uses the `CSFLOAT_API_KEY` Cloudflare Worker secret to show the lowest active CSFloat listing. If the secret is not configured, it falls back to the latest daily average sale price from CSFloat's public history graph. Never put the key in frontend code, Git, or a GitHub Actions log.
 
-The repository includes a root `_worker.js` entry point for Cloudflare Pages advanced mode; it explicitly routes `/api/csfloat-price` and forwards all other requests to static assets. Deploy using **Git integration** (not dashboard Direct Upload), set the project root to the repository root, leave the build command empty, and set the build output directory to `.`. Cloudflare's advanced-mode Worker takes precedence over file-based `functions/` routing.
+The repository includes a root `_worker.js` entry point and `wrangler.jsonc` configuration for deploying the site as a Cloudflare Worker with static assets. The Worker explicitly routes `/api/csfloat-price` and forwards all other requests to static assets. In Cloudflare Workers Builds, use `npx wrangler deploy` as the deploy command and keep the repository root as the root directory. The `.assetsignore` file excludes server-side source and repository files from public asset uploads.
 
-In Cloudflare, open **Workers & Pages → your Pages project → Settings → Variables and Secrets**, add `CSFLOAT_API_KEY` as an encrypted **Secret** for the Production environment (not a plain text Variable), then trigger a new production deployment. GitHub repository secrets are not automatically available to a Cloudflare Pages Function.
+In Cloudflare, open **Workers & Pages → csname → Settings → Variables and Secrets**, add `CSFLOAT_API_KEY` as an encrypted **Secret** (not a plain text Variable), then trigger a new production deployment. GitHub repository secrets are not automatically available to the Worker.
 
-Check the production deployment by opening `/api/csfloat-price?health=1`; it should return `{"ok":true,"apiKeyConfigured":true,"deploymentMode":"cloudflare-pages-worker"}`. A 404 means the active build is still serving static files and did not deploy the root `_worker.js`. If `apiKeyConfigured` is false, add `CSFLOAT_API_KEY` as a Production Secret and redeploy. A price lookup that reports the key was rejected means the secret value itself is invalid.
+Check the production deployment by opening `/api/csfloat-price?health=1`; it should return `{"ok":true,"apiKeyConfigured":true,"deploymentMode":"cloudflare-worker"}`. A 404 means the active deployment is not running the root `_worker.js`. If `apiKeyConfigured` is false, add `CSFLOAT_API_KEY` as a Worker Secret and redeploy. A price lookup that reports the key was rejected means the secret value itself is invalid.
 
 ## Data sources
 
